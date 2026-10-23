@@ -11,6 +11,7 @@
   const mm = (n) => { const v = n / 1e6; return '$' + num(v, Math.abs(v) >= 100 ? 0 : 1) + ' M'; };
   const pc = (x) => num(x * 100, 0) + '%';
   const $ = (id) => document.getElementById(id);
+  const setTake = (items) => $('vx-take-list').replaceChildren(...items.map((t) => el('li', null, t)));
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const fmtF = (s) => { const p = s.split('-'); return (p[2] ? (+p[2]) + ' ' : '') + M3[+p[1] - 1] + ' ' + p[0]; };
 
@@ -128,12 +129,12 @@
     const dcRoll = d3.rollups(rowsF, sum, (r) => r.dc).sort((a, b) => dcCmp(a[0], b[0]) || b[1] - a[1]);
 
     // ---- encabezado
-    if (!rowsF.length) $('vx-take').textContent = 'Ninguna venta cumple los filtros elegidos. Limpia algún filtro para volver a ver datos.';
+    if (!rowsF.length) setTake(['Ninguna venta cumple los filtros elegidos. Limpia algún filtro para volver a ver datos.']);
     else {
-      let t = years[0].toUpperCase() + years.slice(1) + ': ' + mm(total) + ' netos en ' + nf.format(rowsF.length) + ' registros.';
-      if (bestRow) { const bm = bestRow[0] % 100, by = Math.floor(bestRow[0] / 100); t += ' ' + MF[bm - 1] + (multi || f.anio.length !== 1 ? ' ' + by : '') + ' es el mejor mes con ' + mm(bestRow[1]) + '.'; }
-      if (dcRoll[0] && dcRoll[0][0] !== OTROS) t += ' ' + dcRoll[0][0] + ' concentra ' + pc(dcRoll[0][1] / total) + ' de la venta.';
-      $('vx-take').textContent = t;
+      const t = [years[0].toUpperCase() + years.slice(1) + ': ' + mm(total) + ' netos en ' + nf.format(rowsF.length) + ' registros.'];
+      if (bestRow) { const bm = bestRow[0] % 100, by = Math.floor(bestRow[0] / 100); t.push(MF[bm - 1] + (multi || f.anio.length !== 1 ? ' ' + by : '') + ' es el mejor mes con ' + mm(bestRow[1]) + '.'); }
+      if (dcRoll[0] && dcRoll[0][0] !== OTROS) t.push(dcRoll[0][0] + ' concentra ' + pc(dcRoll[0][1] / total) + ' de la venta.');
+      setTake(t);
     }
     const act = dash.meta && dash.meta.actualizado ? new Date(dash.meta.actualizado + 'T12:00:00').toLocaleDateString('es-CL', {day: 'numeric', month: 'long', year: 'numeric'}) : '';
     $('vx-meta').textContent = 'Fuente: planilla VENTAS CRV 2026, hojas 2025 y 2026. Montos netos en pesos chilenos.' + (act ? ' Datos al ' + act + '.' : '');
@@ -332,7 +333,7 @@
     wasBusy = busy;
     $('vx-upd').textContent = lastOk ? 'Última lectura ' + fmtHora(lastOk) + ' · se actualiza solo cada 5 min' : '';
     if (s1.status === 'error' && !built) {
-      $('vx-take').textContent = 'No se pudieron cargar las ventas. Revisa tu conexión e intenta de nuevo.';
+      setTake(['No se pudieron cargar las ventas. Revisa tu conexión e intenta de nuevo.']);
       return;
     }
     const d = dash.data('ventas');

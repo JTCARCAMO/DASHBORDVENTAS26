@@ -89,7 +89,10 @@ b, strong { font-weight: 800; }
 .vx-logo { height: clamp(52px, 8vw, 78px); width: auto; display: block; }
 .vx-eyebrow { margin: 0 0 .15rem; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--brand-blue); font-weight: 500; }
 @media (prefers-color-scheme: dark) { .vx-eyebrow { color: var(--color-blue); } }
-.vx-take { margin: .45rem 0 0; font-size: .95rem; max-width: 72ch; color: var(--color-fg); }
+.vx-take { margin: .55rem 0 0; font-size: .95rem; max-width: 72ch; color: var(--color-fg); }
+.vx-take-h { margin: 0 0 .2rem; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 500; color: var(--brand-orange); }
+.vx-take ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .1rem; }
+.vx-take li::marker { color: var(--brand-blue); }
 .vx-meta { margin: .3rem 0 0; font-size: .78rem; color: var(--color-fg-muted); }
 .vx-side { display: flex; flex-direction: column; align-items: flex-end; gap: .5rem; }
 .vx-live { display: inline-flex; align-items: center; gap: .45rem; font-family: var(--font-mono); font-size: .72rem; font-weight: 500; color: var(--color-ok); background: color-mix(in srgb, var(--brand-green) 12%, transparent); border: 1px solid color-mix(in srgb, var(--brand-green) 35%, transparent); border-radius: 999px; padding: .2rem .65rem; white-space: nowrap; }
