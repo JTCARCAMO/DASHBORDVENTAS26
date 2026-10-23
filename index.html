@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ventas CRV</title>
+<meta name="description" content="Dashboard de ventas netas CRV 2025 y 2026 por fecha, DC, cliente y estado.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:wght@400&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="lock" class="lock">
+  <div class="lock-box" role="dialog" aria-modal="true" aria-labelledby="lock-title">
+    <p class="lock-eyebrow">Acceso privado</p>
+    <h1 class="lock-title" id="lock-title">Ventas CRV</h1>
+    <p class="lock-hint">Toca los bloques en el orden de tu clave.</p>
+    <div class="lock-tiles" id="lock-tiles" role="group" aria-label="Bloques de la clave"></div>
+    <div class="lock-dots" id="lock-dots" aria-hidden="true"></div>
+    <p class="lock-msg" id="lock-msg" role="status" aria-live="polite"></p>
+    <button type="button" class="vx-btn" id="lock-reset">Borrar</button>
+  </div>
+</div>
+<div id="dash-root" hidden>
+<div class="vx" id="vx">
+  <header id="vx-top">
+    <h1>Ventas CRV</h1>
+    <p class="vx-take" id="vx-take">Cargando ventas…</p>
+    <p class="vx-meta" id="vx-meta"></p>
+    <div class="vx-refresh"><button class="vx-btn" id="vx-refresh" type="button">Actualizar datos</button><span class="vx-note" id="vx-upd"></span></div>
+  </header>
+
+  <section class="vx-filters" id="filtros" aria-label="Filtros">
+    <div class="vx-frow"><span class="vx-flabel">Año</span><span class="vx-frow" id="f-anio"></span></div>
+    <div class="vx-frow"><span class="vx-flabel">Mes</span><span class="vx-frow" id="f-mes"></span></div>
+    <div class="vx-frow"><span class="vx-flabel">DC</span><span class="vx-frow" id="f-dc"></span></div>
+    <div class="vx-frow"><span class="vx-flabel">Estado</span><span class="vx-frow" id="f-estado"></span></div>
+    <div class="vx-frow"><span class="vx-flabel">Cliente</span>
+      <details class="vx-dd" id="f-cliente-dd">
+        <summary><span>Cliente</span><b id="f-cliente-n">Todos</b></summary>
+        <div class="vx-ddbody">
+          <input type="search" id="f-cliente-q" placeholder="Buscar cliente" aria-label="Buscar cliente">
+          <div class="vx-ddlist" id="f-cliente-list"></div>
+        </div>
+      </details>
+    </div>
+    <div class="vx-fstatus">
+      <span class="vx-note" id="vx-count"></span>
+      <button class="vx-btn" id="vx-reset" type="button">Limpiar filtros</button>
+    </div>
+  </section>
+
+  <section class="vx-kpis" id="kpis" data-source="ventas" aria-label="Indicadores"></section>
+
+  <section class="vx-grid2">
+    <div class="vx-card" id="ranking-meses">
+      <div class="vx-head"><h2 id="rm-title">Ranking de meses</h2><p class="vx-note" id="rm-note"></p></div>
+      <div class="vx-rank" id="rm-list" data-source="ventas"></div>
+    </div>
+    <div class="vx-card" id="evolucion">
+      <div class="vx-head"><h2>Evolución mensual</h2><p class="vx-note">Venta neta por mes, en millones de pesos. Clic en una barra para filtrar ese mes.</p></div>
+      <div class="vx-box" id="vx-evo" data-source="ventas"><div class="vx-svgwrap dash-skeleton"></div><div class="vx-tip" hidden></div></div>
+      <div class="vx-leg"><span style="--sw: var(--sw0)">Facturado</span><span style="--sw: var(--sw1)">Por facturar</span></div>
+    </div>
+  </section>
+
+  <section class="vx-card" id="por-dc">
+    <div class="vx-head"><h2>Rendimiento por DC</h2><p class="vx-note">Ordenado por venta neta. Clic en un DC para filtrar.</p></div>
+    <div class="vx-scroll" data-source="ventas"><table id="dc-table">
+      <thead><tr><th>#</th><th>DC</th><th>Venta neta</th><th class="num">% del total</th><th class="num">Registros</th><th class="num sec">Ticket promedio</th><th class="num sec">Clientes</th><th class="sec">Mejor mes</th><th class="num sec">Por facturar</th></tr></thead>
+      <tbody></tbody><tfoot></tfoot>
+    </table></div>
+  </section>
+
+  <section class="vx-card" id="mapa-dc-mes">
+    <div class="vx-head"><h2>Mapa DC por mes</h2><p class="vx-note">Venta neta en millones de pesos, sumando los años seleccionados. Clic en una celda para filtrar DC y mes.</p></div>
+    <div class="vx-scroll" data-source="ventas"><table class="vx-hm" id="hm-table"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+  </section>
+
+  <section class="vx-grid2">
+    <div class="vx-card" id="top-clientes">
+      <div class="vx-head"><h2>Top 10 clientes</h2><p class="vx-note" id="tc-note"></p></div>
+      <div class="vx-rank" id="tc-list" data-source="ventas"></div>
+    </div>
+    <div class="vx-card" id="top-ventas">
+      <div class="vx-head"><h2>Mejores ventas</h2><p class="vx-note">Las 10 facturas u hitos de mayor monto según los filtros.</p></div>
+      <div class="vx-scroll"><table id="tv-table" data-source="ventas" data-row-key="id">
+        <thead><tr><th>#</th><th data-field="cliente">Cliente</th><th data-field="dc" class="sec">DC</th><th data-field="fecha" class="sec">Fecha</th><th data-field="estado">Estado</th><th data-field="monto" class="num">Monto neto</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section class="vx-card" id="detalle">
+    <div class="vx-bar2">
+      <div class="vx-head"><h2>Detalle de ventas</h2><p class="vx-note" id="dt-note"></p></div>
+      <input class="vx-search" id="dt-q" type="search" placeholder="Buscar cliente, proyecto o DC" aria-label="Buscar en el detalle">
+    </div>
+    <div class="vx-scroll tall"><table id="dt-table" data-source="ventas" data-row-key="id">
+      <thead><tr>
+        <th data-field="fecha"><button class="vx-th" data-k="fecha" type="button">Fecha</button></th>
+        <th data-field="cliente"><button class="vx-th" data-k="cliente" type="button">Cliente</button></th>
+        <th data-field="proyecto"><button class="vx-th" data-k="proyecto" type="button">Proyecto o hito</button></th>
+        <th data-field="dc"><button class="vx-th" data-k="dc" type="button">DC</button></th>
+        <th data-field="estado"><button class="vx-th" data-k="estado" type="button">Estado</button></th>
+        <th data-field="factura" class="sec"><button class="vx-th" data-k="factura" type="button">Factura</button></th>
+        <th data-field="monto" class="num"><button class="vx-th" data-k="monto" type="button">Monto neto</button></th>
+      </tr></thead>
+      <tbody></tbody><tfoot></tfoot>
+    </table></div>
+  </section>
+
+  <details class="vx-notes" id="notas">
+    <summary>Criterios y datos por confirmar</summary>
+    <ul>
+      <li>Venta neta es el monto neto (sin IVA) de cada factura o hito de las hojas 2025 y 2026 de la planilla VENTAS CRV 2026.</li>
+      <li>Facturado es una factura ya emitida. Por facturar reúne OC aprobada, cerrado con OC, pendiente y sin estado.</li>
+      <li>La hoja 2025 arrastra filas fechadas en 2026. Se excluyen porque la hoja 2026 es la fuente vigente de esos meses y así no se duplican.</li>
+      <li>Los meses posteriores al actual aparecen como proyectados: son cuotas o facturas ya agendadas, todavía no emitidas.</li>
+      <li>Los datos se leen de la planilla cada vez que se abre el dashboard o se presiona Actualizar datos.</li>
+    </ul>
+  </details>
+</div>
+</div>
+<noscript>Este dashboard necesita JavaScript activado.</noscript>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="config.js"></script>
+<script src="dash-shim.js"></script>
+<script src="app.js"></script>
+<script src="acceso.js"></script>
+</body>
+</html>
