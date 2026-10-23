@@ -28,10 +28,11 @@
     servidor: 'La planilla no respondió. Intenta de nuevo en un momento.'
   };
 
-  letras.forEach(function (ch) {
+  letras.forEach(function (ch, i) {
     var b = document.createElement('button');
     b.type = 'button';
-    b.className = 'lock-tile';
+    // colores del logo: Ciclo (azul), recreo (naranja), Vía (verde)
+    b.className = 'lock-tile' + (i >= 11 ? ' g' : i >= 5 ? ' o' : '');
     b.textContent = ch;
     b.setAttribute('aria-label', ch);
     b.addEventListener('click', function () { tocar(ch); });

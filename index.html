@@ -3,19 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ventas CRV</title>
+<title>Ventas CicloRecreoVía</title>
 <meta name="description" content="Dashboard de ventas netas CRV 2025 y 2026 por fecha, DC, cliente y estado.">
+<link rel="icon" href="logo.png" type="image/png">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:wght@400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div id="lock" class="lock">
   <div class="lock-box" role="dialog" aria-modal="true" aria-labelledby="lock-title">
+    <img class="lock-logo" src="logo.png" alt="Fundación CicloRecreoVía">
     <p class="lock-eyebrow">Acceso privado</p>
-    <h1 class="lock-title" id="lock-title">Ventas CRV</h1>
+    <h1 class="lock-title" id="lock-title">Panel de ventas</h1>
     <p class="lock-hint">Toca los bloques en el orden de tu clave.</p>
     <div class="lock-tiles" id="lock-tiles" role="group" aria-label="Bloques de la clave"></div>
     <div class="lock-dots" id="lock-dots" aria-hidden="true"></div>
@@ -25,11 +27,19 @@
 </div>
 <div id="dash-root" hidden>
 <div class="vx" id="vx">
-  <header id="vx-top">
-    <h1>Ventas CRV</h1>
-    <p class="vx-take" id="vx-take">Cargando ventas…</p>
-    <p class="vx-meta" id="vx-meta"></p>
-    <div class="vx-refresh"><button class="vx-btn" id="vx-refresh" type="button">Actualizar datos</button><span class="vx-note" id="vx-upd"></span></div>
+  <header class="vx-top" id="vx-top">
+    <img class="vx-logo" src="logo.png" alt="Fundación CicloRecreoVía">
+    <div>
+      <p class="vx-eyebrow">Panel comercial · 2025–2026</p>
+      <h1>Ventas CicloRecreoVía</h1>
+      <p class="vx-take" id="vx-take">Cargando ventas…</p>
+      <p class="vx-meta" id="vx-meta"></p>
+    </div>
+    <div class="vx-side">
+      <span class="vx-live" id="vx-live"><i></i><span id="vx-live-t">En vivo</span></span>
+      <button class="vx-btn" id="vx-refresh" type="button">Actualizar ahora</button>
+      <span class="vx-upd" id="vx-upd"></span>
+    </div>
   </header>
 
   <section class="vx-filters" id="filtros" aria-label="Filtros">
@@ -48,7 +58,7 @@
     </div>
     <div class="vx-fstatus">
       <span class="vx-note" id="vx-count"></span>
-      <button class="vx-btn" id="vx-reset" type="button">Limpiar filtros</button>
+      <button class="vx-btn primary" id="vx-reset" type="button">Limpiar filtros</button>
     </div>
   </section>
 
@@ -60,16 +70,16 @@
       <div class="vx-rank" id="rm-list" data-source="ventas"></div>
     </div>
     <div class="vx-card" id="evolucion">
-      <div class="vx-head"><h2>Evolución mensual</h2><p class="vx-note">Venta neta por mes, en millones de pesos. Clic en una barra para filtrar ese mes.</p></div>
+      <div class="vx-head"><h2>Evolución mensual</h2><p class="vx-note">Venta neta por mes y estado, en millones de pesos; incluye los pendientes por facturar. Clic en una barra para filtrar ese mes.</p></div>
       <div class="vx-box" id="vx-evo" data-source="ventas"><div class="vx-svgwrap dash-skeleton"></div><div class="vx-tip" hidden></div></div>
-      <div class="vx-leg"><span style="--sw: var(--sw0)">Facturado</span><span style="--sw: var(--sw1)">Por facturar</span></div>
+      <div class="vx-leg"><span style="--sw: var(--st-ok)">OK</span><span style="--sw: var(--st-cl)">Cerrado con OC</span><span style="--sw: var(--st-pe)">Pendiente (por facturar)</span></div>
     </div>
   </section>
 
   <section class="vx-card" id="por-dc">
-    <div class="vx-head"><h2>Rendimiento por DC</h2><p class="vx-note">Ordenado por venta neta. Clic en un DC para filtrar.</p></div>
+    <div class="vx-head"><h2>Rendimiento por DC</h2><p class="vx-note">Ordenado por venta neta. OTROS DCS agrupa a los DC sin detalle y va al final. Clic en un DC para filtrar.</p></div>
     <div class="vx-scroll" data-source="ventas"><table id="dc-table">
-      <thead><tr><th>#</th><th>DC</th><th>Venta neta</th><th class="num">% del total</th><th class="num">Registros</th><th class="num sec">Ticket promedio</th><th class="num sec">Clientes</th><th class="sec">Mejor mes</th><th class="num sec">Por facturar</th></tr></thead>
+      <thead><tr><th>#</th><th>DC</th><th>Venta neta</th><th class="num">% del total</th><th class="num">Registros</th><th class="num sec">Ticket promedio</th><th class="num sec">Clientes</th><th class="sec">Mejor mes</th><th class="num sec">Cerrado con OC</th></tr></thead>
       <tbody></tbody><tfoot></tfoot>
     </table></div>
   </section>
@@ -116,12 +126,13 @@
     <summary>Criterios y datos por confirmar</summary>
     <ul>
       <li>Venta neta es el monto neto (sin IVA) de cada factura o hito de las hojas 2025 y 2026 de la planilla VENTAS CRV 2026.</li>
-      <li>Facturado es una factura ya emitida. Por facturar reúne OC aprobada, cerrado con OC, pendiente y sin estado.</li>
+      <li>Venta neta suma solo filas con estado OK o Cerrado con OC. Pendiente (por facturar) incluye las filas con estado vacío: se muestra aparte y, al elegir el estado Pendiente en el filtro, pasa a ser lo que se ve en todo el dashboard.</li>
       <li>La hoja 2025 arrastra filas fechadas en 2026. Se excluyen porque la hoja 2026 es la fuente vigente de esos meses y así no se duplican.</li>
-      <li>Los meses posteriores al actual aparecen como proyectados: son cuotas o facturas ya agendadas, todavía no emitidas.</li>
-      <li>Los datos se leen de la planilla cada vez que se abre el dashboard o se presiona Actualizar datos.</li>
+      <li>El mejor y el peor mes consideran solo los meses ya transcurridos. Los meses futuros aparecen como proyectados al final del ranking.</li>
+      <li>Los datos se actualizan solos cada 5 minutos desde la planilla.</li>
     </ul>
   </details>
+  <p class="vx-foot">Fundación <b>CicloRecreoVía</b> · Panel de ventas · información privada</p>
 </div>
 </div>
 <noscript>Este dashboard necesita JavaScript activado.</noscript>

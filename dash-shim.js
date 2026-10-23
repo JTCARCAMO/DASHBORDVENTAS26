@@ -16,6 +16,8 @@
   var listeners = [];
   var store = { ventas: { status: 'locked', data: [], refreshing: false } };
   var claveActual = null;
+  var AUTO_MS = 5 * 60 * 1000;   // actualización automática: cada 5 minutos
+  var ultima = 0;
 
   function notify() {
     listeners.forEach(function (fn) {
@@ -39,6 +41,7 @@
   function aceptar(res) {
     dash.meta = { actualizado: res.actualizado || '', notas: res.notas || [] };
     store.ventas = { status: 'ok', data: res.filas || [], refreshing: false };
+    ultima = Date.now();
   }
 
   var dash = {
@@ -79,6 +82,16 @@
     }
   };
   window.dash = dash;
+
+  // Actualización automática: cada 5 minutos, y al volver a la pestaña si pasó ese tiempo.
+  function auto() {
+    if (claveActual && !document.hidden && !store.ventas.refreshing) dash.refresh();
+  }
+  setInterval(auto, AUTO_MS);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && claveActual && Date.now() - ultima >= AUTO_MS) auto();
+  });
+  dash.autoMs = AUTO_MS;
 
   var t;
   window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(notify, 150); });
