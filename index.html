@@ -62,6 +62,8 @@
     </div>
   </section>
 
+  <p class="vx-ctx" id="vx-ctx"></p>
+
   <section class="vx-kpis" id="kpis" data-source="ventas" aria-label="Indicadores"></section>
 
   <section class="vx-grid2">
@@ -72,14 +74,14 @@
     <div class="vx-card" id="evolucion">
       <div class="vx-head"><h2>Evolución mensual</h2><p class="vx-note">Venta neta por mes y estado, en millones de pesos; incluye los pendientes por facturar. Clic en una barra para filtrar ese mes.</p></div>
       <div class="vx-box" id="vx-evo" data-source="ventas"><div class="vx-svgwrap dash-skeleton"></div><div class="vx-tip" hidden></div></div>
-      <div class="vx-leg"><span style="--sw: var(--st-ok)">OK</span><span style="--sw: var(--st-cl)">Cerrado con OC</span><span style="--sw: var(--st-pe)">Pendiente (por facturar)</span></div>
+      <div class="vx-leg"><span style="--sw: var(--st-ok)">OK</span><span style="--sw: var(--st-cl)">Proyección segura (cerrado con OC)</span><span style="--sw: var(--st-pe)">Proyección por confirmar (pendiente)</span></div>
     </div>
   </section>
 
   <section class="vx-card" id="por-dc">
-    <div class="vx-head"><h2>Rendimiento por DC</h2><p class="vx-note">Ordenado por venta neta. OTROS DCS agrupa a los DC sin detalle y va al final. Clic en un DC para filtrar.</p></div>
+    <div class="vx-head"><h2>Rendimiento por DC</h2><p class="vx-note">Ordenado por venta neta. El % es sobre la venta de todos los DC, aunque filtres uno. OTROS DCS agrupa a los DC sin detalle y va al final. Clic en un DC para filtrar.</p></div>
     <div class="vx-scroll" data-source="ventas"><table id="dc-table">
-      <thead><tr><th>#</th><th>DC</th><th>Venta neta</th><th class="num">% del total</th><th class="num">Registros</th><th class="num sec">Ticket promedio</th><th class="num sec">Clientes</th><th class="sec">Mejor mes</th><th class="num sec">Cerrado con OC</th></tr></thead>
+      <thead><tr><th>#</th><th>DC</th><th>Venta neta</th><th class="num">% del total</th><th class="num">Registros</th><th class="num sec">Ticket promedio</th><th class="num sec">Clientes</th><th class="sec" id="dc-th-best">Mejor mes</th><th class="num sec">Proyección segura</th></tr></thead>
       <tbody></tbody><tfoot></tfoot>
     </table></div>
   </section>
@@ -129,6 +131,7 @@
       <li>Venta neta suma solo filas con estado OK o Cerrado con OC. Pendiente (por facturar) incluye las filas con estado vacío: se muestra aparte y, al elegir el estado Pendiente en el filtro, pasa a ser lo que se ve en todo el dashboard.</li>
       <li>La hoja 2025 arrastra filas fechadas en 2026. Se excluyen porque la hoja 2026 es la fuente vigente de esos meses y así no se duplican.</li>
       <li>El mejor y el peor mes consideran solo los meses ya transcurridos. Los meses futuros aparecen como proyectados al final del ranking.</li>
+      <li>Flujo proyectado: Cerrado con OC es proyección segura (falta facturar con la OC ya formalizada); Pendiente es proyección por confirmar (negocio avanzando, sin OC). Juntos forman el flujo proyectado total.</li>
       <li>Los datos se actualizan solos cada 5 minutos desde la planilla.</li>
     </ul>
   </details>

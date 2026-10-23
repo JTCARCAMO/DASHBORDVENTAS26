@@ -4,6 +4,8 @@
   const ESTADOS = ['OK','Cerrado con OC','Pendiente'];
   const PEND = 'Pendiente';
   const OTROS = 'OTROS DCS';
+  // Mes de ingreso al equipo (año*12 + mes). El peor mes de un DC se mide desde su ingreso; si no está aquí, desde su primera venta.
+  const INGRESO = {'ADRIANA M.': 2026 * 12 + 3, 'ANGELIS C.': 2026 * 12 + 3, 'ANDRES G.': 2026 * 12 + 5};
   const KEYS = ['anio','mes','dc','cliente','estado'];
   const nf = new Intl.NumberFormat('es-CL');
   const clp = (n) => '$' + nf.format(Math.round(n));
@@ -76,7 +78,9 @@
     KEYS.forEach((k) => (chipMaps[k] || []).forEach((c) => c.b.setAttribute('aria-pressed', f[k].includes(c.val) ? 'true' : 'false')));
     document.querySelectorAll('#f-cliente-list input').forEach((cb) => { cb.checked = f.cliente.includes(cb.value); });
     $('f-cliente-n').textContent = f.cliente.length ? f.cliente.length + ' seleccionados' : 'Todos';
-    $('vx-count').textContent = 'Mostrando ' + nf.format(rowsF.length) + ' de ' + nf.format(all.length) + ' registros. Cada gráfico respeta todos los filtros menos el de su propia dimensión, que queda resaltado.';
+    const conVenta = all.filter(isWon).length, pendTodos = all.length - conVenta;
+    $('vx-count').textContent = f.estado.length ? 'Mostrando ' + nf.format(rowsF.length) + ' de ' + nf.format(all.length) + ' registros. Cada gráfico respeta todos los filtros menos el de su propia dimensión, que queda resaltado.'
+      : 'Mostrando ' + nf.format(rowsF.length) + ' de ' + nf.format(conVenta) + ' registros con venta · ' + nf.format(pendTodos) + ' pendientes aparte. Cada gráfico respeta todos los filtros menos el de su propia dimensión, que queda resaltado.';
   }
 
   function rankList(host, items, o) {
@@ -120,49 +124,115 @@
       .map(([k, v]) => ({key: k, anio: Math.floor(k / 100), mes: k % 100, ...v, total: v.ok + v.cl + v.pe, vn: v.ok + v.cl + (f.estado.includes(PEND) ? v.pe : 0)}));
     const multi = new Set(byP.map((p) => p.anio)).size > 1;
 
-    // ---- mejor / peor mes: solo meses transcurridos hasta el mes en curso
+    // ---- mejor / peor mes: solo meses transcurridos; el peor, solo meses completos (sin el mes en curso)
     const total = sum(rowsF);
-    const monthTot = d3.rollups(rowsF, sum, (r) => r.anio * 100 + r.mes).filter((x) => elapsed(x[0])).sort((a, b) => b[1] - a[1]);
+    const monthAll = d3.rollups(rowsF, sum, (r) => r.anio * 100 + r.mes);
+    const idxOf = (k) => Math.floor(k / 100) * 12 + (k % 100);
+    const monthTot = monthAll.filter((x) => elapsed(x[0])).sort((a, b) => b[1] - a[1]);
     const bestRow = monthTot[0];
-    const worst = monthTot[monthTot.length - 1];
+    // peor mes: se evalúan todos los meses completos desde el primer mes con ventas (ingreso del DC o inicio del período),
+    // incluyendo los meses sin ventas, que cuentan como $0
+    let worst = null;
+    if (monthAll.length) {
+      const tot = new Map(monthAll.map(([k, v]) => [idxOf(k), v]));
+      const firstSale = (rows) => d3.min(rows, (r) => r.anio * 12 + r.mes);
+      const start = f.dc.length ? d3.min(f.dc, (dc) => INGRESO[dc] || firstSale(rowsF.filter((r) => r.dc === dc)) || Infinity) : d3.min([...tot.keys()]);
+      const lastYr = f.anio.length ? d3.max(f.anio.map(Number)) * 12 + 12 : Infinity;
+      const end = Math.min(cur - 1, lastYr);
+      const cand = [];
+      for (let i = start; i <= end; i++) {
+        const mo = ((i - 1) % 12) + 1, yr = Math.floor((i - 1) / 12);
+        if (f.mes.length && !f.mes.includes(String(mo))) continue;
+        if (f.anio.length && !f.anio.includes(String(yr))) continue;
+        cand.push({k: yr * 100 + mo, v: tot.get(i) || 0});
+      }
+      if (cand.length > 1) worst = cand.reduce((a, b) => (b.v < a.v ? b : a));
+    }
     const lbl = (k) => M3[k % 100 - 1] + ' ' + Math.floor(k / 100);
     const dcRoll = d3.rollups(rowsF, sum, (r) => r.dc).sort((a, b) => dcCmp(a[0], b[0]) || b[1] - a[1]);
+    const oneMonth = f.mes.length === 1 && f.anio.length === 1;
+    const selIdx = oneMonth ? (+f.anio[0]) * 12 + (+f.mes[0]) : 0;
 
-    // ---- encabezado
-    if (!rowsF.length) setTake(['Ninguna venta cumple los filtros elegidos. Limpia algún filtro para volver a ver datos.']);
-    else {
-      const t = [years[0].toUpperCase() + years.slice(1) + ': ' + mm(total) + ' netos en ' + nf.format(rowsF.length) + ' registros.'];
-      if (bestRow) { const bm = bestRow[0] % 100, by = Math.floor(bestRow[0] / 100); t.push(MF[bm - 1] + (multi || f.anio.length !== 1 ? ' ' + by : '') + ' es el mejor mes con ' + mm(bestRow[1]) + '.'); }
-      if (dcRoll[0] && dcRoll[0][0] !== OTROS) t.push(dcRoll[0][0] + ' concentra ' + pc(dcRoll[0][1] / total) + ' de la venta.');
+    // ---- datos de proyección: ignoran el filtro de estado
+    const allE = all.filter((r) => pass(r, f, 'estado'));
+    const seg = sum(allE.filter(isCl)), conf = sum(allE.filter((r) => !isWon(r)));
+    const segN = allE.filter(isCl).length, confN = allE.filter((r) => !isWon(r)).length;
+    const regs = (n) => nf.format(n) + (n === 1 ? ' registro' : ' registros');
+
+    // ---- encabezado (Datos clave)
+    const yTxt = years[0].toUpperCase() + years.slice(1);
+    if (!rowsF.length) {
+      setTake(conf > 0 && !f.estado.includes(PEND)
+        ? [yTxt + ': sin ventas cerradas con estos filtros.', mm(conf) + ' por facturar en ' + regs(confN) + ' (pendientes).']
+        : ['Ninguna venta cumple los filtros elegidos. Limpia algún filtro para volver a ver datos.']);
+    } else {
+      const t = [yTxt + ': ' + mm(total) + ' netos en ' + regs(rowsF.length) + '.'];
+      if (oneMonth) {
+        const top = [...rowsF].sort((a, b) => b.monto - a.monto)[0];
+        t.push('La mayor venta de ' + MF[+f.mes[0] - 1].toLowerCase() + ' fue ' + top.cliente + ', ' + mm(top.monto) + '.');
+      } else if (bestRow) {
+        const bm = bestRow[0] % 100, by = Math.floor(bestRow[0] / 100);
+        t.push(MF[bm - 1] + (multi || f.anio.length !== 1 ? ' ' + by : '') + ' es el mejor mes con ' + mm(bestRow[1]) + '.');
+      }
+      const dAll = sum(all.filter((r) => pass(r, f, 'dc')));
+      if (f.dc.length === 1) t.push(f.dc[0] + ' es ' + pc(total / (dAll || 1)) + ' de la venta de todos los DC.');
+      else if (f.dc.length > 1) t.push('Los DC elegidos suman ' + pc(total / (dAll || 1)) + ' de la venta de todos los DC.');
+      else { const lead = dcRoll.find((x) => x[0] !== OTROS); if (lead) t.push(lead[0] + ' concentra ' + pc(lead[1] / total) + ' de la venta.'); }
       setTake(t);
     }
     const act = dash.meta && dash.meta.actualizado ? new Date(dash.meta.actualizado + 'T12:00:00').toLocaleDateString('es-CL', {day: 'numeric', month: 'long', year: 'numeric'}) : '';
     $('vx-meta').textContent = 'Fuente: planilla VENTAS CRV 2026, hojas 2025 y 2026. Montos netos en pesos chilenos.' + (act ? ' Datos al ' + act + '.' : '');
 
+    // ---- línea de contexto
+    const ctx = [f.anio.length ? f.anio.join(' + ') : 'todos los años'];
+    if (f.mes.length) ctx.push(f.mes.map((m) => MF[+m - 1]).join(', '));
+    if (f.dc.length) ctx.push(f.dc.join(', '));
+    if (f.cliente.length) ctx.push(f.cliente.length === 1 ? f.cliente[0] : f.cliente.length + ' clientes');
+    ctx.push('Estado: ' + (f.estado.length ? f.estado.join(' + ') : 'OK y Cerrado con OC'));
+    $('vx-ctx').textContent = 'Viendo: ' + ctx.join(' · ');
+
     // ---- KPIs
-    const ok = sum(rowsF.filter(isOk)), cl = sum(rowsF.filter(isCl)), pe = total - ok - cl;
-    const pendRows = all.filter((r) => pass(r, f, 'estado') && !isWon(r));
-    const pendTot = sum(pendRows), pendN = pendRows.length;
-    const won = rowsF.filter(isWon);
-    const cierres = new Set(won.map((r) => r.cliente)).size;
+    const ok = sum(rowsF.filter(isOk)), cl = sum(rowsF.filter(isCl));
+    const cierres = new Set(rowsF.filter(isWon).map((r) => r.cliente)).size;
     const med = d3.median(rowsF, (r) => r.monto) || 0;
+    const heroT = (() => {
+      const e = f.estado;
+      if (!e.length || (e.length === 2 && e.includes('OK') && e.includes('Cerrado con OC'))) return 'Venta neta';
+      if (e.length === 1) return e[0] === 'OK' ? 'Ventas OK' : e[0] === 'Cerrado con OC' ? 'Cerrado con OC' : 'Por facturar (pendientes)';
+      return 'Venta neta + pendientes';
+    })();
+    let mesK;
+    if (oneMonth) {
+      const prevIdx = selIdx - 1, py = Math.floor((prevIdx - 1) / 12), pm = ((prevIdx - 1) % 12) + 1;
+      const prevTot = sum(all.filter((r) => pass(r, f, 'mes', 'anio') && r.anio * 12 + r.mes === prevIdx));
+      const sub = prevTot > 0 ? (total >= prevTot ? '+' : '−') + pc(Math.abs(total - prevTot) / prevTot) + ' vs ' + M3[pm - 1] + ' ' + py : 'Sin ventas en ' + M3[pm - 1] + ' ' + py + ' para comparar';
+      mesK = ['Mes seleccionado', M3[+f.mes[0] - 1] + ' ' + f.anio[0], mm(total) + ' · ' + sub + (selIdx === cur ? ' · mes en curso, parcial' : ''), '', 'var(--brand-orange)'];
+    } else {
+      mesK = ['Mejor y peor mes', '', '', '', 'var(--brand-orange)', [
+        ['Mejor mes', bestRow ? lbl(bestRow[0]) : '—', bestRow ? mm(bestRow[1]) : ''],
+        ['Peor mes', worst ? lbl(worst.k) : '—', worst ? (worst.v === 0 ? 'Sin ventas' : mm(worst.v)) : '']]];
+    }
     const share = (v) => total ? pc(v / total) + ' de la venta' : 'Sin ventas';
     const kp = [
-      ['Venta neta', mm(total), nf.format(rowsF.length) + ' registros · ' + years, 'hero', 'var(--brand-orange)'],
+      [heroT, mm(total), regs(rowsF.length) + ' · ' + years, 'hero', 'var(--brand-orange)'],
       ['Cierres ganados', nf.format(cierres), 'Clientes con OK o cerrado con OC · ' + mm(ok + cl), '', 'var(--brand-green)'],
       ['Ventas OK', mm(ok), share(ok), '', 'var(--st-ok)'],
-      ['Cerrado con OC', mm(cl), share(cl), '', 'var(--st-cl)'],
-      ['Por facturar (pendientes)', mm(pendTot), pendN + (pendN === 1 ? ' registro' : ' registros') + ' · incluye sin estado', '', 'var(--st-pe)'],
       ['Ticket promedio', rowsF.length ? mm(total / rowsF.length) : '—', 'Mediana ' + mm(med), '', 'var(--brand-blue)'],
-      ['Mejor mes', bestRow ? lbl(bestRow[0]) : '—', bestRow ? mm(bestRow[1]) + (worst && worst !== bestRow ? ' · peor: ' + lbl(worst[0]) + ' ' + mm(worst[1]) : '') : 'Sin ventas', '', 'var(--brand-orange)'],
+      mesK,
+      ['Proyección segura', mm(seg), 'Cerrado con OC · ' + regs(segN), '', 'var(--st-cl)'],
+      ['Proyección por confirmar', mm(conf), 'Pendiente · ' + regs(confN) + ' · incluye sin estado', '', 'var(--st-pe)'],
+      ['Flujo proyectado total', mm(seg + conf), 'Segura ' + mm(seg) + ' + por confirmar ' + mm(conf), 'full', 'var(--brand-blue)'],
     ];
-    $('kpis').replaceChildren(...kp.map((k) => { const d = el('div', 'vx-kpi' + (k[3] ? ' ' + k[3] : '')); d.style.setProperty('--k', k[4]); d.append(el('span', 'vx-kl', k[0]), el('span', 'vx-kv', k[1]), el('span', 'vx-ks', k[2])); return d; }));
+    $('kpis').replaceChildren(...kp.map((k) => { const d = el('div', 'vx-kpi' + (k[3] ? ' ' + k[3] : '')); d.style.setProperty('--k', k[4]); d.append(el('span', 'vx-kl', k[0]));
+      if (k[5]) k[5].forEach((r) => { const row = el('div', 'vx-mrow'); row.append(el('span', 'vx-mt', r[0]), el('span', 'vx-mm', r[1]), el('span', 'vx-ma', r[2])); d.appendChild(row); });
+      else d.append(el('span', 'vx-kv', k[1]), el('span', 'vx-ks', k[2]));
+      return d; }));
 
     // ---- ranking de meses: transcurridos de mejor a peor, luego los futuros (proyectados)
     const rkP = byP.filter((p) => p.vn > 0);
     const past = rkP.filter((p) => elapsed(p.key)).sort((a, b) => b.vn - a.vn);
     const fut = rkP.filter((p) => !elapsed(p.key)).sort((a, b) => a.key - b.key);
-    $('rm-title').textContent = 'Ranking de meses ' + (f.anio.length ? f.anio.join(' + ') : '');
+    $('rm-title').textContent = 'Ranking de meses · ' + (f.anio.length ? f.anio.join(' + ') : 'todos los años');
     $('rm-note').textContent = 'De mejor a peor entre los meses transcurridos. Los meses futuros van al final como proyectados. Clic en un mes para filtrarlo.';
     const rmTotal = d3.sum(rkP, (p) => p.vn);
     rankList($('rm-list'), [...past, ...fut].map((p) => {
@@ -177,8 +247,10 @@
     const dTot = sum(rowsD);
     const dcs = d3.groups(rowsD, (r) => r.dc).map(([dc, v]) => {
       const bm = d3.rollups(v, sum, (r) => r.anio * 100 + r.mes).filter((x) => elapsed(x[0])).sort((a, b) => b[1] - a[1])[0];
-      return {dc, v: sum(v), n: v.length, cl: new Set(v.map((r) => r.cliente)).size, cierre: sum(v.filter(isCl)), pend: sum(v.filter((r) => !isWon(r))), best: bm ? lbl(bm[0]) + ' · ' + mm(bm[1]) : ''};
+      const top1 = [...v].sort((a, b) => b.monto - a.monto)[0];
+      return {dc, v: sum(v), n: v.length, cl: new Set(v.map((r) => r.cliente)).size, cierre: sum(v.filter(isCl)), pend: sum(v.filter((r) => !isWon(r))), best: oneMonth ? (top1 ? top1.cliente + ' · ' + mm(top1.monto) : '') : bm ? lbl(bm[0]) + ' · ' + mm(bm[1]) : ''};
     }).sort((a, b) => dcCmp(a.dc, b.dc) || b.v - a.v);
+    $('dc-th-best').textContent = oneMonth ? 'Mayor venta del mes' : 'Mejor mes';
     const dtb = $('dc-table').querySelector('tbody'); dtb.replaceChildren();
     const dmax = d3.max(dcs, (d) => d.v) || 1;
     dcs.forEach((d, i) => {
@@ -311,7 +383,7 @@
         .on('pointermove', (ev) => {
           tip.replaceChildren();
           tip.appendChild(el('b', null, MF[p.mes - 1] + ' ' + p.anio + (fut ? ' · proyectado' : '')));
-          [['OK', p.ok], ['Cerrado con OC', p.cl], ['Pendiente', p.pe], ['Total', p.total]].forEach(([a, b]) => { const d = el('div'); d.append(el('span', null, a), el('span', null, mm(b))); tip.appendChild(d); });
+          [['OK', p.ok], ['Proyección segura (cerrado con OC)', p.cl], ['Por confirmar (pendiente)', p.pe], ['Total', p.total]].forEach(([a, b]) => { const d = el('div'); d.append(el('span', null, a), el('span', null, mm(b))); tip.appendChild(d); });
           tip.hidden = false;
           const r = box.getBoundingClientRect();
           tip.style.left = Math.max(0, Math.min(ev.clientX - r.left + 12, box.clientWidth - tip.offsetWidth)) + 'px';
