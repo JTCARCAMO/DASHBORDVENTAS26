@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ventas CicloRecreoVía</title>
-<meta name="description" content="Dashboard de ventas netas CRV 2025 y 2026 por fecha, DC, cliente y estado.">
+<meta name="description" content="Dashboard de ventas netas CRV por año, fecha, DC, cliente y estado.">
 <link rel="icon" href="logo.png" type="image/png">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +30,7 @@
   <header class="vx-top" id="vx-top">
     <img class="vx-logo" src="logo.png" alt="Fundación CicloRecreoVía">
     <div>
-      <p class="vx-eyebrow">Panel comercial · 2025–2026</p>
+      <p class="vx-eyebrow" id="vx-eyebrow">Panel comercial</p>
       <h1>Ventas CicloRecreoVía</h1>
       <div class="vx-take" id="vx-take"><p class="vx-take-h">Datos clave</p><ul id="vx-take-list"><li>Cargando ventas…</li></ul></div>
       <p class="vx-meta" id="vx-meta"></p>
@@ -127,11 +127,11 @@
   <details class="vx-notes" id="notas">
     <summary>Criterios y datos por confirmar</summary>
     <ul>
-      <li>Venta neta es el monto neto (sin IVA) de cada factura o hito de las hojas 2025 y 2026 de la planilla VENTAS CRV 2026.</li>
+      <li>Venta neta es el monto neto (sin IVA) de cada factura o hito de las pestañas de cada año (2025, 2026, 2027…) de la planilla VENTAS CRV 2026.</li>
       <li>Venta neta suma solo filas con estado OK o Cerrado con OC. Pendiente (por facturar) incluye las filas con estado vacío: se muestra aparte y, al elegir el estado Pendiente en el filtro, pasa a ser lo que se ve en todo el dashboard.</li>
       <li>La hoja 2025 arrastra filas fechadas en 2026. Se excluyen porque la hoja 2026 es la fuente vigente de esos meses y así no se duplican.</li>
       <li>El mejor y el peor mes consideran solo los meses ya transcurridos. Los meses futuros aparecen como proyectados al final del ranking.</li>
-      <li>Flujo proyectado: Cerrado con OC es proyección segura (falta facturar con la OC ya formalizada); Pendiente es proyección por confirmar (negocio avanzando, sin OC). Juntos forman el flujo proyectado total.</li>
+      <li>Venta OK suma solo las filas con estado OK y fecha de factura. Venta proyectada suma Cerrado con OC (proyección segura) más Pendiente y sin estado (proyección por confirmar), contando solo filas con cliente y monto anotados. Flujo total suma Venta OK más la venta proyectada. Venta proyectada y flujo dicen "mensual" si hay meses elegidos y "anual" si solo hay años. Estas cajas no cambian con el filtro de estado.</li>
       <li>Los datos se actualizan solos cada 5 minutos desde la planilla.</li>
     </ul>
   </details>
