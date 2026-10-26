@@ -181,7 +181,12 @@
       setTake(t);
     }
     const act = dash.meta && dash.meta.actualizado ? new Date(dash.meta.actualizado + 'T12:00:00').toLocaleDateString('es-CL', {day: 'numeric', month: 'long', year: 'numeric'}) : '';
-    $('vx-meta').textContent = 'Fuente: planilla VENTAS CRV 2026, hojas 2025 y 2026. Montos netos en pesos chilenos.' + (act ? ' Datos al ' + act + '.' : '');
+    // años y pestañas según los datos recibidos, para que una pestaña nueva (2027, 2028...) se refleje sola
+    const yAll = [...new Set(all.map((r) => r.anio))].sort();
+    const hojas = [...new Set(all.map((r) => String(r.hoja || r.anio)))].sort();
+    const listaY = (xs) => xs.length > 1 ? xs.slice(0, -1).join(', ') + ' y ' + xs[xs.length - 1] : xs.join('');
+    $('vx-eyebrow').textContent = 'Panel comercial · ' + (yAll.length > 1 ? yAll[0] + '–' + yAll[yAll.length - 1] : yAll.join(''));
+    $('vx-meta').textContent = 'Fuente: planilla VENTAS CRV 2026, hojas ' + listaY(hojas) + '. Montos netos en pesos chilenos.' + (act ? ' Datos al ' + act + '.' : '');
 
     // ---- línea de contexto
     const ctx = [f.anio.length ? f.anio.join(' + ') : 'todos los años'];
