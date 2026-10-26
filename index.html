@@ -131,7 +131,7 @@
       <li>Venta neta suma solo filas con estado OK o Cerrado con OC. Pendiente (por facturar) incluye las filas con estado vacío: se muestra aparte y, al elegir el estado Pendiente en el filtro, pasa a ser lo que se ve en todo el dashboard.</li>
       <li>La hoja 2025 arrastra filas fechadas en 2026. Se excluyen porque la hoja 2026 es la fuente vigente de esos meses y así no se duplican.</li>
       <li>El mejor y el peor mes consideran solo los meses ya transcurridos. Los meses futuros aparecen como proyectados al final del ranking.</li>
-      <li>Flujo proyectado: Cerrado con OC es proyección segura (falta facturar con la OC ya formalizada); Pendiente es proyección por confirmar (negocio avanzando, sin OC). Juntos forman el flujo proyectado total.</li>
+      <li>Venta OK suma solo las filas con estado OK y fecha de factura. Venta proyectada suma Cerrado con OC (proyección segura) más Pendiente y sin estado (proyección por confirmar), contando solo filas con cliente y monto anotados. Flujo total suma Venta OK más la venta proyectada. Venta proyectada y flujo dicen "mensual" si hay meses elegidos y "anual" si solo hay años. Estas cajas no cambian con el filtro de estado.</li>
       <li>Los datos se actualizan solos cada 5 minutos desde la planilla.</li>
     </ul>
   </details>
