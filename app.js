@@ -201,8 +201,10 @@
     $('vx-ctx').textContent = 'Viendo: ' + ctx.join(' · ');
 
     // ---- KPIs
-    const ok = sum(rowsF.filter(isOk)), cl = sum(rowsF.filter(isCl));
-    const cierres = new Set(rowsF.filter(isWon).map((r) => r.cliente)).size;
+    const ok = sum(rowsF.filter(isOk));
+    // cierres ganados: facturas de ventas OK; un mismo N° de factura cuenta una vez y cada fila sin N° cuenta como una
+    const okF = rowsF.filter(isOk);
+    const cierres = new Set(okF.filter((r) => r.factura).map((r) => r.factura)).size + okF.filter((r) => !r.factura).length;
     const med = d3.median(rowsF, (r) => r.monto) || 0;
     let mesK;
     if (oneMonth) {
@@ -217,7 +219,7 @@
     }
     const kp = [
       ['Venta OK', mm(vOk), regs(okE.length) + ' con estado OK y fecha de factura · ' + years, 'hero', 'var(--brand-orange)'],
-      ['Cierres ganados', nf.format(cierres), 'Clientes con OK o cerrado con OC · ' + mm(ok + cl), '', 'var(--brand-green)'],
+      ['Cierres ganados', nf.format(cierres), 'Facturas de ventas OK · ' + mm(ok), '', 'var(--brand-green)'],
       ['Venta proyectada ' + per, mm(seg + conf), 'Cerrado con OC, pendientes y sin estado · ' + regs(segN + confN), '', 'var(--st-ok)'],
       ['Ticket promedio', rowsF.length ? mm(total / rowsF.length) : '—', 'Mediana ' + mm(med), '', 'var(--brand-blue)'],
       mesK,
